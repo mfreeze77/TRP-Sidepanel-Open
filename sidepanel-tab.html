@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .dropdown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Two columns of equal width */
+            grid-gap: 10px; /* Spacing between columns */
+            margin-bottom: 10px;
+        }
+
+        .dropdown-container {
+            margin-bottom: 10px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        /* Style for the submit button */
+        .submit-button {
+            display: block; /* Block-level element */
+            margin: 10px 0; /* Margin for spacing */
+            padding: 8px; /* Padding for button size */
+            background-color: #4CAF50; /* Background color */
+            color: white; /* Text color */
+            border: none; /* No border */
+            border-radius: 4px; /* Rounded corners */
+            cursor: pointer; /* Pointer cursor on hover */
+        }
+
+        /* Hover effect for the button */
+        .submit-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    </style>
+</head>
+<body>
+    <h1>Tab-specific side panel</h1>
+    <p>This side panel is available and stays open only on the current tab</p>
+
+    <button id="Submit" class="submit-button">Submit</button>
+
+
+    <div class="dropdown-grid">
+        <!-- Column 1 Dropdowns -->
+        <div class="dropdown-container">
+            <label for="quarterDropdown">Quarter:</label>
+            <select id="quarterDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="personnelDropdown">Personnel:</label>
+            <select id="personnelDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="runDropdown">Run:</label>
+            <select id="runDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="downDistanceDropdown">Down & Distance:</label>
+            <select id="downDistanceDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="yardLineDropdown">Yard Line:</label>
+            <select id="yardLineDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="hashDropdown">Hash:</label>
+            <select id="hashDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="teamDropdown">Team:</label>
+            <select id="teamDropdown"></select>
+        </div>
+
+        <!-- Column 2 Dropdowns -->
+        <div class="dropdown-container">
+            <label for="passDropdown">Pass:</label>
+            <select id="passDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="screenDropdown">Screen:</label>
+            <select id="screenDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="resultDropdown">Result:</label>
+            <select id="resultDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="penaltyDropdown">Penalty:</label>
+            <select id="penaltyDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="fieldGoalDropdown">Field Goal:</label>
+            <select id="fieldGoalDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="yardageMakeDropdown">Yardage Make:</label>
+            <select id="yardageMakeDropdown"></select>
+        </div>
+        <div class="dropdown-container">
+            <label for="timeDropdown">Time:</label>
+            <select id="timeDropdown"></select>
+        </div>
+    </div>
+
+    <script src="populateDropdown.js"></script>
+</body>
+</html>
