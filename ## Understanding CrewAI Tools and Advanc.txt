@@ -1,0 +1,738 @@
+## Understanding CrewAI Tools and Advanced Techniques for Tool Development in CrewAI
+Tools in CrewAI are essentially utilities or functions that agents can leverage to accomplish their tasks. They can range from simple operations like text processing to complex interactions with web services.
+
+Types of Tools:
+Built-in Tools: Predefined tools available within the CrewAI framework that offer common functionalities needed by agents.
+Custom Tools: User-defined tools created to meet specific requirements not covered by built-in tools.
+Creating a Custom Tool
+To create a custom tool, you extend the BaseTool class and implement the _run method, which defines the tool's operation. Here's a simplified example:
+
+Step 1: Define a Custom Tool
+python
+Copy code
+from crewai_tools import BaseTool
+
+class MyCustomTool(BaseTool):
+    name = "MyCustomTool"
+    description = "This tool performs a custom operation."
+
+    def _run(self, argument: str) -> str:
+        # Implement your custom tool logic here
+        # For demonstration, we'll just return the argument with a modification
+        return f"Processed {argument}"
+Step 2: Use the Custom Tool in an Agent
+python
+Copy code
+from crewai import Agent
+
+# Assuming the MyCustomTool class is defined as above
+my_custom_tool = MyCustomTool()
+
+# Create an agent and assign the custom tool to it
+agent_with_custom_tool = Agent(
+    role='Data Processor',
+    goal='Process data using a custom tool',
+    tools=[my_custom_tool]
+)
+Advanced Tool Configurations
+Dynamic Tool Selection
+Agents can dynamically select which tool to use based on the task at hand, enhancing flexibility and efficiency.
+
+python
+Copy code
+def select_tool_for_task(task):
+    if task.type == "data_analysis":
+        return data_analysis_tool
+    elif task.type == "web_scraping":
+        return web_scraping_tool
+    else:
+        return default_tool
+
+# Assign the selected tool to an agent dynamically
+agent_with_dynamic_tool = Agent(
+    role='Dynamic Agent',
+    goal='Select tools dynamically based on the task',
+    tools=[select_tool_for_task(current_task)]
+)
+Integrating External Services as Tools
+You can create custom tools that integrate external services, like APIs, to extend the functionality of your agents.
+
+python
+Copy code
+class ExternalAPITool(BaseTool):
+    def _run(self, argument: str) -> str:
+        response = call_external_api(argument)  # Assume this function is defined
+        return process_api_response(response)  # Process the response as needed
+Tools with State Management
+For complex operations, tools can manage state to maintain context across multiple invocations, useful for tasks that span several steps.
+
+python
+Copy code
+class StatefulTool(BaseTool):
+    def __init__(self):
+        self.state = {}
+
+    def _run(self, argument: str) -> str:
+        if argument not in self.state:
+            self.state[argument] = initialize_state_for(argument)
+        return perform_operation_with_state(argument, self.state[argument])
+Conclusion
+Tools are essential components within the CrewAI ecosystem, significantly expanding the capabilities of agents. By understanding how to create and utilize both built-in and custom tools, developers can tailor the CrewAI framework to meet a wide range of operational needs. Advanced configurations like dynamic tool selection, integration of external services, and stateful tools allow for the creation of sophisticated, adaptable, and powerful AI agents capable of performing complex tasks with high efficiency and flexibility.
+
+Advanced Techniques and Tips for Tool Development:
+Tool Caching Mechanisms
+For tools that perform resource-intensive operations or fetch data from slow external sources, implementing caching can significantly improve performance. Caching allows tools to reuse previously retrieved or calculated results instead of repeating expensive operations.
+
+python
+Copy code
+class CachedAPITool(BaseTool):
+    def __init__(self):
+        self.cache = {}
+
+    def _run(self, query: str) -> str:
+        if query in self.cache:
+            return self.cache[query]  # Return cached result
+        else:
+            result = self.call_external_api(query)
+            self.cache[query] = result  # Cache the new result
+            return result
+Asynchronous Execution Support
+For tools that perform long-running operations, adding support for asynchronous execution can help improve the concurrency of your CrewAI tasks, allowing other operations to proceed while waiting for the tool to complete.
+
+python
+Copy code
+import asyncio
+
+class AsyncAPITool(BaseTool):
+    async def _run_async(self, query: str) -> str:
+        result = await self.fetch_data_asynchronously(query)
+        return result
+
+    # Assuming fetch_data_asynchronously is an async function
+Error Handling and Retry Logic
+Robust error handling and retry mechanisms are crucial for ensuring the reliability of tools, especially when interacting with external services or APIs that might be unreliable or rate-limited.
+
+python
+Copy code
+class ReliableAPITool(BaseTool):
+    def _run(self, query: str) -> str:
+        retries = 3
+        for attempt in range(retries):
+            try:
+                return self.call_external_api(query)
+            except ExternalAPIError as e:
+                if attempt < retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    raise e from None  # Raise error after final attempt
+Tool Configuration and Customization
+Allowing tools to be configured with parameters at runtime can enhance their flexibility. Parameters could include API keys, thresholds, or other settings that modify the tool's behavior.
+
+python
+Copy code
+class ConfigurableAPITool(BaseTool):
+    def __init__(self, api_key, threshold):
+        self.api_key = api_key
+        self.threshold = threshold
+
+    def _run(self, query: str) -> str:
+        if self.meets_threshold(query):
+            return self.call_api_with_key(query, self.api_key)
+        else:
+            return "Query does not meet threshold."
+Tool Composition
+Combining multiple tools into a single, composite tool can simplify complex operations and improve modularity. This allows you to build sophisticated capabilities by composing simpler, reusable components.
+
+python
+Copy code
+class CompositeTool(BaseTool):
+    def __init__(self, tool1, tool2):
+        self.tool1 = tool1
+        self.tool2 = tool2
+
+    def _run(self, argument: str) -> str:
+        intermediate_result = self.tool1.run(argument)
+        final_result = self.tool2.run(intermediate_result)
+        return final_result
+Conclusion
+By leveraging advanced techniques such as caching, asynchronous execution, error handling, tool configuration, and composition, developers can create powerful, efficient, and reliable tools within the CrewAI framework. These practices enhance the capabilities of agents, enabling them to perform a wider range of tasks with greater sophistication and resilience.
+
+Overview of CrewAI Tools
+CSVSearchTool
+Enables semantic searches within CSV files, useful for querying large datasets.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import CSVSearchTool
+
+# Initialize with a specific CSV file
+csv_search_tool = CSVSearchTool(csv='path/to/your/data.csv')
+
+# Search for a query within the CSV
+result = csv_search_tool.run("Find sales data for Q1 2022")
+CodeDocsSearchTool
+Facilitates semantic searches within code documentation, aiding developers in finding specific information efficiently.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import CodeDocsSearchTool
+
+# Initialize for general code documentation search
+code_docs_search_tool = CodeDocsSearchTool()
+
+# Specific documentation site search
+code_docs_search_tool_with_url = CodeDocsSearchTool(docs_url='https://docs.example.com/reference')
+DOCXSearchTool
+Allows for semantic searching within DOCX documents, streamlining the extraction of relevant information from document files.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import DOCXSearchTool
+
+# Initialize for any DOCX file search
+docx_search_tool = DOCXSearchTool()
+
+# Search within a specific DOCX file
+specific_docx_search_tool = DOCXSearchTool(docx='path/to/document.docx')
+DirectoryReadTool
+Provides a detailed enumeration of all files within a specified directory, including nested subdirectories, useful for directory inventory tasks.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import DirectoryReadTool
+
+# Initialize to read any directory's content
+directory_read_tool = DirectoryReadTool()
+
+# Initialize with a specific directory
+directory_read_tool_with_path = DirectoryReadTool(directory='/path/to/your/directory')
+DirectorySearchTool
+Enables semantic search for queries within the content of a specified directory, leveraging RAG for efficient file navigation.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import DirectorySearchTool
+
+# Initialize for searching within any directory
+directory_search_tool = DirectorySearchTool()
+
+# For searching within a specific directory
+directory_search_tool_with_directory = DirectorySearchTool(directory='/path/to/directory')
+FileReadTool
+Streamlines the process of reading and retrieving content from various text-based file formats, adapting its functionality based on the file type.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import FileReadTool
+
+# Initialize for reading any known file
+file_read_tool = FileReadTool()
+
+# Initialize with a specific file path
+file_read_tool_with_path = FileReadTool(file_path='path/to/your/file.txt')
+Advanced Examples and Techniques
+Custom Configuration and Embeddings
+These tools offer customization options, particularly in selecting different models for embeddings and summarization, enhancing their adaptability to specific tasks or domains.
+
+python
+Copy code
+# Example for customizing a tool
+from crewai_tools import CSVSearchTool
+
+custom_csv_search_tool = CSVSearchTool(
+    config={
+        "llm": {
+            "provider": "openai",
+            "config": {"model": "gpt-4"}
+        },
+        "embedder": {
+            "provider": "google",
+            "config": {"model": "universal-sentence-encoder"}
+        }
+    }
+)
+Dynamic File or Directory Selection
+For tools that offer the flexibility to operate without a predefined file or directory, you can dynamically assign these based on runtime conditions or agent discoveries.
+
+python
+Copy code
+# Dynamically setting a CSV file path for CSVSearchTool
+csv_file_path = determine_csv_file_path()  # Assume this function is defined
+dynamic_csv_search_tool = CSVSearchTool()
+dynamic_csv_search_tool.csv = csv_file_path
+Integration with Agent Workflows
+Integrating these tools into agent workflows allows for complex data processing, search, and analysis tasks to be performed efficiently. Configuring agents with a combination of these tools empowers them to handle a wide range of tasks dynamically.
+
+python
+Copy code
+from crewai import Agent
+
+# Agent with multiple tools
+multi_tool_agent = Agent(
+    role="Data Analyst",
+    tools=[csv_search_tool, directory_search_tool, file_read_tool]
+)
+
+# Example task where the agent decides which tool to use based on the task description
+def execute_task_with_appropriate_tool(agent, task_description):
+    if "CSV data" in task_description:
+        result = agent.tools[0].run(task_description)
+    elif "directory content" in task_description:
+        result = agent.tools[1].run(task_description)
+    else:
+        result = agent.tools[2].run(task_description)
+    return result
+Conclusion
+CrewAI's prebuilt tools, along with the capability to create custom tools, offer a robust framework for developing sophisticated AI agents capable of performing a diverse range of tasks. Advanced configurations and dynamic usage examples demonstrate how these tools can be tailored and integrated into CrewAI workflows, maximizing their utility and effectiveness in addressing complex challenges.
+
+GithubSearchTool
+The GithubSearchTool is designed for deep, semantic searches across GitHub repositories, sifting through code, issues, pull requests, and more, making it indispensable for developers and researchers seeking specific GitHub-hosted information.
+
+Basic Usage Example:
+python
+Copy code
+from crewai_tools import GithubSearchTool
+
+# Initialize for searches within a specific GitHub repository
+github_search_tool = GithubSearchTool(
+    github_repo='https://github.com/example/repo',
+    content_types=['code', 'issue']
+)
+Advanced Configuration:
+Leveraging custom models and embeddings can significantly enhance the tool's search capability, enabling more accurate and relevant search results tailored to specific needs.
+
+python
+Copy code
+github_search_tool_custom = GithubSearchTool(
+    github_repo='https://github.com/example/repo',
+    content_types=['code', 'issue'],
+    config={
+        "llm": {
+            "provider": "openai",
+            "config": {"model": "gpt-4"}
+        },
+        "embedder": {
+            "provider": "google",
+            "config": {"model": "bert-large"}
+        }
+    }
+)
+MDXSearchTool
+Aimed at market data extraction, the MDXSearchTool is a vital resource for analysts requiring rapid insights into the AI market. It interfaces with multiple data sources to streamline the acquisition and organization of market data.
+
+Basic Usage Example:
+python
+Copy code
+from crewai_tools import MDXSearchTool
+
+# Initialize for general MDX content search
+mdx_search_tool = MDXSearchTool()
+Advanced Configuration:
+Similar to the GithubSearchTool, customizing the underlying models for embeddings and summarization can refine the tool’s efficiency in extracting relevant market insights.
+
+python
+Copy code
+mdx_search_tool_custom = MDXSearchTool(
+    config={
+        "llm": {
+            "provider": "ollama",
+            "config": {"model": "llama2"}
+        },
+        "embedder": {
+            "provider": "google",
+            "config": {"model": "models/embedding-001"}
+        }
+    }
+)
+Advanced Techniques and Tips:
+Dynamic Content Type Selection
+For tools that allow searching across various content types (e.g., GithubSearchTool), dynamically adjusting the content types based on the query or task at hand can optimize the search results.
+
+python
+Copy code
+def dynamic_content_type_selection(tool, query):
+    if "bug" in query:
+        tool.content_types = ['issue']
+    elif "feature" in query:
+        tool.content_types = ['pr', 'code']
+Integration with Workflow
+Incorporating these tools into a CrewAI agent's workflow enables the automation of complex tasks like code review, documentation search, or market analysis.
+
+python
+Copy code
+from crewai import Agent
+
+# Example agent with GithubSearchTool
+code_review_agent = Agent(
+    role="Code Reviewer",
+    tools=[github_search_tool_custom]  # Custom configured tool
+)
+
+# Agent workflow example
+def review_code_for_issues(agent, query):
+    results = agent.tools[0].run(query)
+    return results
+Custom Tool Configuration for Specialized Searches
+Developing custom configurations for each tool based on the task specifics or the data source peculiarities can greatly enhance the precision and relevance of search results.
+
+python
+Copy code
+# Custom tool configuration for specialized searches
+specialized_search_tool = GithubSearchTool(
+    github_repo='https://github.com/special/repo',
+    content_types=['issue'],
+    config={
+        "llm": {"provider": "ollama", "config": {"model": "specialized-model"}},
+        "embedder": {"provider": "google", "config": {"model": "specialized-embedding"}}
+    }
+)
+Conclusion
+The GithubSearchTool and MDXSearchTool, along with the capability for custom model and embedding configurations, offer powerful avenues for conducting semantic searches and data extraction within the CrewAI framework. By leveraging these tools with advanced configurations and integrating them into agent workflows, developers can create sophisticated, AI-driven systems capable of navigating complex information landscapes efficiently. These tools, with their advanced search capabilities, are instrumental in harnessing the full potential of semantic search and data retrieval within diverse domains, including software development and market analysis.
+
+PDFSearchTool
+Basic Usage:
+python
+Copy code
+from crewai_tools import PDFSearchTool
+
+# For searches within any PDF content provided during execution
+pdf_search_tool = PDFSearchTool()
+
+# For exclusive search within a specific PDF
+pdf_search_tool_specific = PDFSearchTool(pdf='path/to/your/document.pdf')
+Advanced Usage:
+Leverage custom models for specialized searches within PDFs, enhancing accuracy for domain-specific queries.
+
+python
+Copy code
+pdf_search_tool_custom = PDFSearchTool(
+    pdf='path/to/your/document.pdf',
+    config={
+        "llm": {
+            "provider": "openai",
+            "config": {"model": "curie"}
+        }
+    }
+)
+PGSearchTool
+Basic Usage:
+python
+Copy code
+from crewai_tools import PGSearchTool
+
+# Initialize with database URI and target table
+pg_search_tool = PGSearchTool(
+    db_uri='postgresql://user:password@localhost:5432/mydatabase',
+    table_name='employees'
+)
+Advanced Usage:
+Customize database queries based on user input or pre-defined criteria to enhance data retrieval efficiency.
+
+python
+Copy code
+pg_search_tool_dynamic = PGSearchTool(
+    db_uri='postgresql://user:password@localhost:5432/mydatabase',
+    table_name='dynamic_table'  # dynamically set based on application context
+)
+ScrapeWebsiteTool
+Basic Usage:
+python
+Copy code
+from crewai_tools import ScrapeWebsiteTool
+
+# Scrape any website's content
+scrape_website_tool = ScrapeWebsiteTool()
+
+# Scrape specific website content
+scrape_website_tool_specific = ScrapeWebsiteTool(website_url='https://www.example.com')
+Advanced Usage:
+Implement pre-processing of web pages to filter or modify content before extraction, improving result relevance.
+
+python
+Copy code
+# Pre-processing can be done by extending ScrapeWebsiteTool or by processing its output
+SeleniumScrapingTool
+Basic Usage:
+python
+Copy code
+from crewai_tools import SeleniumScrapingTool
+
+# Scrape an entire webpage
+selenium_scraping_tool_full_page = SeleniumScrapingTool(website_url='https://example.com')
+
+# Scrape a specific element
+selenium_scraping_tool_specific = SeleniumScrapingTool(
+    website_url='https://example.com',
+    css_element='.main-content'
+)
+Advanced Usage:
+Enhance scraping with dynamic content interaction (e.g., clicking buttons) before data extraction.
+
+python
+Copy code
+# This requires a custom extension of SeleniumScrapingTool to interact with web page elements dynamically before scraping.
+SerperDevTool
+Basic Usage:
+python
+Copy code
+from crewai_tools import SerperDevTool
+
+# Internet searching capabilities
+serper_dev_tool = SerperDevTool()
+Advanced Usage:
+Optimize search queries with natural language processing (NLP) techniques to improve the relevance of search results.
+
+python
+Copy code
+# NLP processing can be done prior to using SerperDevTool to formulate more effective search queries.
+Conclusion
+The provided CrewAI tools offer a wide range of functionalities, from document searching within PDFs and databases to comprehensive web scraping. By utilizing these tools within CrewAI agents, you can tackle a broad spectrum of tasks with enhanced precision and efficiency. Advanced techniques, such as custom model integration, dynamic content interaction, and pre-processing of content, further extend the capabilities of these tools, enabling more sophisticated and tailored task executions. These tools and methodologies pave the way for developing highly capable, automated solutions across various domains.
+
+Advanced Configurations and Tips:
+Tool Integration and Pipelines
+For tools that perform searches or data extraction, integrating them into larger processing pipelines can automate complex workflows. For example, the output from PDFSearchTool could automatically feed into a data analysis tool or a summarization model.
+
+python
+Copy code
+# Conceptual pipeline integration
+pdf_content = pdf_search_tool.run("search query")
+analyzed_data = data_analysis_tool.run(pdf_content)
+summary = summarization_tool.run(analyzed_data)
+Custom Error Handling Strategies
+For web scraping tools like ScrapeWebsiteTool and SeleniumScrapingTool, implementing custom error handling can improve resilience against web page changes, network issues, or unexpected content structures.
+
+python
+Copy code
+try:
+    content = scrape_website_tool.run(website_url='https://www.example.com')
+except CustomPageStructureError as e:
+    handle_custom_error(e)
+Dynamic Tool Configuration Based on Context
+Tools can be dynamically configured based on the context of their use within an agent’s workflow. For instance, the PGSearchTool could alter its table_name dynamically based on previous task outputs within a crew.
+
+python
+Copy code
+previous_output = 'customer_data'
+pg_search_tool.table_name = table_mapping[previous_output]  # Dynamically set the table name
+Use of Proxies and User Agents in Web Scraping Tools
+For ScrapeWebsiteTool and SeleniumScrapingTool, utilizing proxies and custom user agents can help bypass scraping protections on websites, enabling more effective data extraction.
+
+python
+Copy code
+scrape_website_tool_proxied = ScrapeWebsiteTool(
+    website_url='https://www.example.com',
+    proxy='http://your-proxy:port',
+    user_agent='YourCustomUserAgentString'
+)
+Combining Tools for Enhanced Functionality
+Leverage the output of one tool as the input for another to solve complex problems. For instance, use GithubSearchTool to find relevant repositories, then ScrapeWebsiteTool to extract specific data from the repository's webpage.
+
+python
+Copy code
+repos = github_search_tool.run("AI research projects")
+for repo_url in repos:
+    data = scrape_website_tool.run(website_url=repo_url)
+    # Process data from each repo
+Performance Optimization
+For tools interacting with external services or performing heavy computations, optimizing performance through caching, concurrency, or by minimizing the amount of data processed can significantly enhance their usability.
+
+python
+Copy code
+# Example of caching search results
+search_results_cache = {}
+
+def cached_search(query, tool):
+    if query not in search_results_cache:
+        search_results_cache[query] = tool.run(query)
+    return search_results_cache[query]
+Security Considerations
+When developing tools that interact with databases (PGSearchTool) or perform web scraping (ScrapeWebsiteTool, SeleniumScrapingTool), incorporating security best practices, such as using secure connections, sanitizing inputs to prevent injection attacks, and respecting robots.txt for scraping, is crucial.
+
+Conclusion
+The versatility and power of CrewAI's toolset enable the development of sophisticated, AI-powered applications capable of navigating complex data landscapes. By exploring advanced configurations and employing strategic tips, developers can unlock the full potential of these tools, crafting solutions that are not only effective but also resilient, efficient, and secure.
+
+TXTSearchTool
+Allows semantic searching within text files, making it suitable for extracting information or identifying specific text sections.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import TXTSearchTool
+
+# Search within any text file content
+txt_search_tool = TXTSearchTool()
+
+# For specific text file searches
+txt_search_tool_specific = TXTSearchTool(txt='path/to/text/file.txt')
+Advanced Configuration:
+Customizing search sensitivity or specificity through model configuration can significantly enhance search outcomes.
+
+python
+Copy code
+txt_search_tool_advanced = TXTSearchTool(
+    txt='path/to/text/file.txt',
+    config={
+        "llm": {"provider": "ollama", "config": {"model": "gpt-3.5-turbo"}},
+        "embedder": {"provider": "google", "config": {"model": "universal-sentence-encoder"}}
+    }
+)
+WebsiteSearchTool
+Crafted for conducting semantic searches within a website, it navigates through website content to provide relevant information based on queries.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import WebsiteSearchTool
+
+# General website content search
+website_search_tool = WebsiteSearchTool()
+
+# Restricted to a specific website
+website_search_tool_specific = WebsiteSearchTool(website='https://example.com')
+Advanced Usage:
+Incorporate custom crawling rules or post-processing of search results for cleaner, more relevant output.
+
+XMLSearchTool
+Designed for semantic searches within XML files, facilitating efficient parsing and information extraction.
+
+Basic Usage:
+python
+Copy code
+from crewai_tools import XMLSearchTool
+
+# Flexible XML content search
+xml_search_tool = XMLSearchTool()
+
+# Specific XML file search
+xml_search_tool_specific = XMLSearchTool(xml='path/to/your/xmlfile.xml')
+Advanced Configuration:
+Tailor XML parsing rules or combine XML search results with other data formats for comprehensive analysis.
+
+YoutubeChannelSearchTool & YoutubeVideoSearchTool
+These tools leverage RAG for semantic searches within Youtube channel content or specific Youtube videos, streamlining the process of finding relevant video content.
+
+Basic Usage (Channel Search):
+python
+Copy code
+from crewai_tools import YoutubeChannelSearchTool
+
+# General or specific channel search
+youtube_channel_search_tool = YoutubeChannelSearchTool(youtube_channel_handle='@exampleChannel')
+Basic Usage (Video Search):
+python
+Copy code
+from crewai_tools import YoutubeVideoSearchTool
+
+# General Youtube content or specific video search
+youtube_video_search_tool = YoutubeVideoSearchTool(youtube_video_url='https://youtube.com/watch?v=example')
+Advanced Techniques:
+Leveraging video metadata, comments, or user-generated content as part of the search criteria can enhance result accuracy and relevance.
+
+Conclusion
+The capabilities provided by these CrewAI tools extend far beyond basic search functionalities, allowing for sophisticated semantic analysis and information retrieval across various content sources. Advanced configurations such as custom models, embeddings, and post-processing techniques further empower users to tailor searches to their specific needs, ensuring high-quality, relevant outcomes. By integrating these tools into CrewAI agents, developers can create highly capable, AI-driven systems for a wide range of applications, from content discovery and analysis to automated data extraction and processing.
+
+To demonstrate the robust capabilities and configurations of CrewAI tools within a broader context of tasks and agents, let's outline a comprehensive scenario. In this setup, we'll integrate the TXTSearchTool and WebsiteSearchTool into specific tasks, assigned to agents capable of processing complex data and web content. This example showcases advanced configurations and the synergy between tools, tasks, and agents, providing a blueprint for deploying sophisticated CrewAI solutions.
+
+Scenario: Market Research and Content Summarization
+Objective: Automate the process of conducting market research by extracting specific information from industry reports (in TXT format) and summarizing relevant online articles.
+
+Step 1: Define the Tools with Advanced Configurations
+python
+Copy code
+from crewai_tools import TXTSearchTool, WebsiteSearchTool
+
+txt_search_tool = TXTSearchTool(
+    config=dict(
+        llm=dict(provider="openai", config=dict(model="gpt-3.5-turbo")),
+        embedder=dict(provider="google", config=dict(model="universal-sentence-encoder"))
+    )
+)
+
+website_search_tool = WebsiteSearchTool(
+    config=dict(
+        llm=dict(provider="openai", config=dict(model="gpt-3.5-turbo")),
+        embedder=dict(provider="google", config=dict(model="universal-sentence-encoder"))
+    )
+)
+Step 2: Create Custom Agents
+python
+Copy code
+from crewai import Agent
+
+# Agent specialized in extracting data from text reports
+data_extraction_agent = Agent(
+    role="Data Extractor",
+    goal="Extract specific information from industry reports",
+    tools=[txt_search_tool]
+)
+
+# Agent specialized in summarizing web content
+content_summarization_agent = Agent(
+    role="Content Summarizer",
+    goal="Summarize relevant online articles",
+    tools=[website_search_tool]
+)
+Step 3: Define Tasks with Dynamic Tool Configuration
+python
+Copy code
+from crewai import Task
+
+# Task for extracting data from a specific market report
+data_extraction_task = Task(
+    description="Extract the latest market trends from the 2022 industry report",
+    expected_output="Key points on market trends",
+    agent=data_extraction_agent,
+    tools=[txt_search_tool],
+    context=[{"txt": "path/to/2022_industry_report.txt"}]  # Dynamic file path
+)
+
+# Task for summarizing online articles on market trends
+content_summarization_task = Task(
+    description="Summarize an article on 2022 market trends",
+    expected_output="Article summary",
+    agent=content_summarization_agent,
+    tools=[website_search_tool],
+    context=[{"website": "https://example.com/articles/market-trends-2022"}]  # Dynamic website URL
+)
+Step 4: Integrate Tasks and Agents into a Crew
+python
+Copy code
+from crewai import Crew
+
+# Forming a crew to handle market research
+market_research_crew = Crew(
+    agents=[data_extraction_agent, content_summarization_agent],
+    tasks=[data_extraction_task, content_summarization_task]
+)
+Advanced Configuration: Feedback Loop for Continuous Improvement
+To enhance the process, implement a feedback mechanism allowing agents to refine their search parameters or models based on task outcomes.
+
+python
+Copy code
+def refine_search_parameters(task, feedback):
+    if feedback.indicates_missed_info:
+        # Adjust the search tool's configuration for broader searches
+        task.tools[0].config['llm']['config']['temperature'] = 0.7
+    elif feedback.indicates_too_broad_results:
+        # Narrow down the search
+        task.tools[0].config['llm']['config']['temperature'] = 0.3
+
+# Example of applying feedback to refine task configurations
+feedback_from_previous_run = {"indicates_missed_info": True}
+refine_search_parameters(data_extraction_task, feedback_from_previous_run)
+Conclusion
+This comprehensive setup illustrates the power of integrating CrewAI tools with specific tasks and agents, forming a highly capable crew for automated market research and content summarization. By leveraging advanced configurations, dynamic tool setups, and incorporating feedback loops, CrewAI enables the development of sophisticated, adaptive AI systems capable of tackling complex information processing and analysis tasks with high efficiency and accuracy.
+
+
+
+
+
+
+
+
